@@ -11,22 +11,6 @@ const RouteMap = (() => {
   let windyFrame = null;
 
   const WINDY_BASE_URL    = 'https://embed.windy.com/embed2.html';
-  const WINDY_DEFAULT_PARAMS = {
-    level:      'surface',
-    overlay:    'wind',
-    product:    'ecmwf',
-    menu:       '',
-    message:    'true',
-    marker:     '',
-    calendar:   'now',
-    pressure:   '',
-    type:       'map',
-    location:   'coordinates',
-    detail:     '',
-    metricWind: 'kt',
-    metricTemp: '\u00b0C',
-    radarRange: '-1',
-  };
   const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -135,10 +119,11 @@ const RouteMap = (() => {
 
   /**
    * Show or hide the Windy weather overlay iframe.
-   * Windy embed URL: https://embed.windy.com/embed2.html
-   * We position a transparent overlay on the Leaflet map to show wind/wave layers.
+   * @param {boolean} show
+   * @param {Array|null} center - optional [lat, lon] centre override
+   * @param {string} [layer='wind'] - Windy overlay type
    */
-  function toggleWindy(show, center) {
+  function toggleWindy(show, center, layer) {
     const container = document.getElementById('windy-overlay');
     if (!container) return;
 
@@ -151,16 +136,28 @@ const RouteMap = (() => {
     const lat  = center ? center[0] : map.getCenter().lat;
     const lon  = center ? center[1] : map.getCenter().lng;
     const zoom = map.getZoom();
+    const overlay = layer || 'wind';
 
     const params = new URLSearchParams({
       lat:       lat.toFixed(3),
       lon:       lon.toFixed(3),
       detailLat: lat.toFixed(3),
       detailLon: lon.toFixed(3),
-      width:     '100%',
-      height:    '100%',
       zoom:      String(zoom),
-      ...WINDY_DEFAULT_PARAMS,
+      level:      'surface',
+      overlay:    overlay,
+      product:    'ecmwf',
+      menu:       '',
+      message:    'true',
+      marker:     '',
+      calendar:   'now',
+      pressure:   '',
+      type:       'map',
+      location:   'coordinates',
+      detail:     '',
+      metricWind: 'kt',
+      metricTemp: '\u00b0C',
+      radarRange: '-1',
     });
 
     const src = `${WINDY_BASE_URL}?${params.toString()}`;

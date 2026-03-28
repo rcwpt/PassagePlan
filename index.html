@@ -105,6 +105,26 @@
         </div>
 
         <div class="form-group">
+          <label for="vessel-name">Vessel Name</label>
+          <input type="text" id="vessel-name" placeholder="e.g. MV Nusantara" />
+        </div>
+
+        <div class="form-group">
+          <label for="voyage-number">Voyage No.</label>
+          <input type="text" id="voyage-number" placeholder="e.g. V-2025-001" />
+        </div>
+
+        <div class="form-group">
+          <label for="port-from">Port of Departure</label>
+          <input type="text" id="port-from" placeholder="e.g. Singapore" />
+        </div>
+
+        <div class="form-group">
+          <label for="port-to">Port of Destination</label>
+          <input type="text" id="port-to" placeholder="e.g. Surabaya" />
+        </div>
+
+        <div class="form-group">
           <label for="departure-time">Departure Date / Time (UTC)</label>
           <input type="datetime-local" id="departure-time" />
         </div>
@@ -113,6 +133,12 @@
           <label for="ship-speed">Ship Speed (Knots)</label>
           <input type="number" id="ship-speed" value="12" min="0.1" max="50" step="0.1"
                  placeholder="e.g. 12" />
+        </div>
+
+        <div class="form-group">
+          <label for="xtd-default">Default XTD (NM) <span title="Cross Track Distance limit — nautical miles either side of route line" style="cursor:help;color:var(--gold);">ℹ</span></label>
+          <input type="number" id="xtd-default" value="0.5" min="0.1" max="10" step="0.1"
+                 placeholder="0.5" />
         </div>
 
         <button class="btn btn-success btn-block" id="calc-btn">
@@ -162,15 +188,28 @@
         </div>
 
         <div class="toggle-row">
-          <span class="toggle-label">Windy Wind/Wave Overlay</span>
+          <span class="toggle-label">Windy Overlay</span>
           <label class="toggle-switch">
             <input type="checkbox" id="windy-toggle" />
             <span class="toggle-slider"></span>
           </label>
         </div>
+
+        <div class="form-group" id="windy-layer-group" style="display:none;">
+          <label for="windy-layer">Weather Layer</label>
+          <select id="windy-layer" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;padding:6px 8px;font-size:12px;">
+            <option value="wind">Wind (Surface)</option>
+            <option value="waves">Wave Height</option>
+            <option value="rain">Rain / Precipitation</option>
+            <option value="pressure">Pressure (MSLP)</option>
+            <option value="temp">Temperature</option>
+            <option value="cbase">Cloud Base</option>
+          </select>
+        </div>
+
         <div style="font-size:10px;color:rgba(255,255,255,0.4);line-height:1.4;">
-          Toggle to overlay Windy weather map.<br>
-          Disables base-map interaction while active.
+          Overlay real-time Windy weather data.<br>
+          Select layer then toggle on. Map interaction pauses while overlay is active.
         </div>
       </div>
 
@@ -225,6 +264,20 @@
         <div id="windy-overlay" aria-label="Windy weather overlay"></div>
       </div>
 
+      <!-- ── Voyage Metadata Block (print-only) ───────────────────────── -->
+      <div id="print-voyage-meta">
+        <div class="meta-grid">
+          <div class="meta-field"><span class="meta-label">Vessel Name: </span><span class="meta-value" id="pm-vessel"></span></div>
+          <div class="meta-field"><span class="meta-label">Voyage No.: </span><span class="meta-value" id="pm-voyage"></span></div>
+          <div class="meta-field"><span class="meta-label">Departure Port: </span><span class="meta-value" id="pm-from"></span></div>
+          <div class="meta-field"><span class="meta-label">Destination Port: </span><span class="meta-value" id="pm-to"></span></div>
+          <div class="meta-field"><span class="meta-label">Departure (UTC): </span><span class="meta-value" id="pm-deptime"></span></div>
+          <div class="meta-field"><span class="meta-label">Speed: </span><span class="meta-value" id="pm-speed"></span></div>
+          <div class="meta-field"><span class="meta-label">Total Distance: </span><span class="meta-value" id="pm-dist"></span></div>
+          <div class="meta-field"><span class="meta-label">ETA Destination: </span><span class="meta-value" id="pm-eta"></span></div>
+        </div>
+      </div>
+
       <!-- ── Passage Plan Table ─────────────────────────────────────── -->
       <div class="table-panel">
         <div class="table-header">
@@ -252,12 +305,16 @@
                 <th class="col-num">Dist (NM)</th>
                 <th class="col-num">Course (°T)</th>
                 <th class="col-num">Cum. NM</th>
+                <th class="col-speed">Speed (kt)</th>
+                <th class="col-time">Leg Time</th>
+                <th class="col-xtd">XTD (NM)</th>
                 <th class="col-eta">ETA (UTC)</th>
+                <th class="col-rem">Remarks</th>
               </tr>
             </thead>
             <tbody id="plan-tbody">
               <tr>
-                <td colspan="8" style="text-align:center;padding:24px;color:#888;font-family:sans-serif;">
+                <td colspan="12" style="text-align:center;padding:24px;color:#888;font-family:sans-serif;">
                   Upload a route file (.rtz, .gpx, .csv) or load the demo route to begin.
                 </td>
               </tr>
@@ -322,6 +379,17 @@
           /* Directly trigger app's internal handler via a custom event */
           window._appLoadWaypoints(wps, 'demo_route.csv');
         });
+      });
+    }
+
+    /* Windy layer selector: show/hide when toggled (logic handled in app.js) */
+    const windyLayer = document.getElementById('windy-layer');
+    const windyLayerGroup = document.getElementById('windy-layer-group');
+    const windyToggle = document.getElementById('windy-toggle');
+
+    if (windyToggle) {
+      windyToggle.addEventListener('change', () => {
+        windyLayerGroup.style.display = windyToggle.checked ? 'block' : 'none';
       });
     }
   });

@@ -20,6 +20,11 @@
   const uploadBtn       = document.getElementById('upload-btn');
   const departureInput  = document.getElementById('departure-time');
   const speedInput      = document.getElementById('ship-speed');
+  const xtdInput        = document.getElementById('xtd-default');
+  const vesselNameInput = document.getElementById('vessel-name');
+  const voyageNumInput  = document.getElementById('voyage-number');
+  const portFromInput   = document.getElementById('port-from');
+  const portToInput     = document.getElementById('port-to');
   const calcBtn         = document.getElementById('calc-btn');
   const locodeInput     = document.getElementById('locode-input');
   const locodeBtn       = document.getElementById('locode-btn');
@@ -60,6 +65,11 @@
   function bindEvents() {
     uploadBtn.addEventListener('click', () => fileInput.click());
 
+    // Drop-zone click also triggers file browser
+    const dropZoneEl = document.getElementById('drop-zone');
+    dropZoneEl.addEventListener('click', () => fileInput.click());
+    dropZoneEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+
     fileInput.addEventListener('change', () => {
       const file = fileInput.files[0];
       if (!file) return;
@@ -85,11 +95,24 @@
 
     locodeInput.addEventListener('keydown', e => { if (e.key === 'Enter') lookupLocode(); });
     speedInput.addEventListener('input',    () => { if (waypoints.length) calculatePlan(); });
+    xtdInput.addEventListener('input',      () => { if (waypoints.length) calculatePlan(); });
     departureInput.addEventListener('input', () => { if (waypoints.length) calculatePlan(); });
 
     windyToggle.addEventListener('change', () => {
-      RouteMap.toggleWindy(windyToggle.checked);
+      const layerEl = document.getElementById('windy-layer');
+      const layer = layerEl ? layerEl.value : 'wind';
+      RouteMap.toggleWindy(windyToggle.checked, null, layer);
     });
+
+    // Re-render overlay when weather layer selection changes
+    const windyLayerEl = document.getElementById('windy-layer');
+    if (windyLayerEl) {
+      windyLayerEl.addEventListener('change', () => {
+        if (windyToggle.checked) {
+          RouteMap.toggleWindy(true, null, windyLayerEl.value);
+        }
+      });
+    }
   }
 
   /* ── File upload handler ─────────────────────────────────────────────────── */
@@ -116,6 +139,7 @@
 
     const speed     = parseFloat(speedInput.value);
     const departure = departureInput.value;
+    const xtdVal    = parseFloat(xtdInput.value) || 0.5;
 
     if (isNaN(speed) || speed <= 0) {
       setStatus('Please enter a valid ship speed (knots).', 'warn');
@@ -140,6 +164,10 @@
         course:   '—',
         eta:      idx === 0 ? formatDateTime(currentTime) : '—',
         cumNM:    0,
+        speed:    speed,
+        legTime:  '—',
+        xtd:      xtdVal.toFixed(1),
+        remarks:  '',
       };
 
       if (idx > 0) {
@@ -165,6 +193,7 @@
         entry.course   = course.toFixed(1);
         entry.eta      = formatDateTime(currentTime);
         entry.cumNM    = cumulativeNM.toFixed(1);
+        entry.legTime  = formatLegTime(hoursNeeded);
       }
 
       planData.push(entry);
@@ -196,15 +225,20 @@
       if (row.index === 1) tr.classList.add('row-departure');
       if (row.index === data.length) tr.classList.add('row-arrival');
 
+      const isFirst = row.index === 1;
       tr.innerHTML = `
         <td class="col-index">${row.index}</td>
         <td class="col-name">${escapeHtml(row.name)}</td>
         <td class="col-coord">${decimalToDMS(row.lat, 'lat')}</td>
         <td class="col-coord">${decimalToDMS(row.lon, 'lon')}</td>
-        <td class="col-num">${row.index === 1 ? '—' : row.distance}</td>
-        <td class="col-num">${row.index === 1 ? '—' : row.course}</td>
-        <td class="col-num">${row.index === 1 ? '—' : row.cumNM}</td>
-        <td class="col-eta">${row.eta}</td>`;
+        <td class="col-num">${isFirst ? '—' : row.distance}</td>
+        <td class="col-num">${isFirst ? '—' : row.course}</td>
+        <td class="col-num">${isFirst ? '—' : row.cumNM}</td>
+        <td class="col-speed">${row.speed}</td>
+        <td class="col-time">${row.legTime}</td>
+        <td class="col-xtd">${row.xtd}</td>
+        <td class="col-eta">${row.eta}</td>
+        <td class="col-rem" contenteditable="true" spellcheck="false"></td>`;
       tableBody.appendChild(tr);
     });
   }
@@ -230,6 +264,23 @@
       setStatus('No passage plan to print. Calculate a plan first.', 'warn');
       return;
     }
+
+    // Populate the hidden print-only voyage metadata block
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val || '—';
+    };
+    const speed     = parseFloat(speedInput.value);
+    const totalDist = planData[planData.length - 1].cumNM;
+    set('pm-vessel',  vesselNameInput.value.trim());
+    set('pm-voyage',  voyageNumInput.value.trim());
+    set('pm-from',    portFromInput.value.trim());
+    set('pm-to',      portToInput.value.trim());
+    set('pm-deptime', planData[0].eta);
+    set('pm-speed',   `${speed} kt`);
+    set('pm-dist',    `${totalDist} NM`);
+    set('pm-eta',     planData[planData.length - 1].eta);
+
     window.print();
   }
 
@@ -249,6 +300,12 @@
   function setStatus(msg, type) {
     statusBar.textContent = msg;
     statusBar.className   = 'status-bar status-' + (type || 'info');
+  }
+
+  function formatLegTime(hours) {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
 
   function formatDateTime(date) {

@@ -288,12 +288,15 @@ html, body {
 /* ── Map Container ─────────────────────────────────────────────────────── */
 .map-wrapper {
   position: relative;
-  flex: 0 0 55%;
+  height: 55vh;
   min-height: 280px;
+  flex-shrink: 0;
   background: #1a3a5c;
 }
 
 #map {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
@@ -396,11 +399,15 @@ html, body {
   white-space: nowrap;
 }
 
-.col-index  { width: 36px;  text-align: center; color: var(--navy-light); font-weight: 700; }
-.col-name   { min-width: 120px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
-.col-coord  { width: 160px; font-size: 11px; color: var(--text-muted); }
-.col-num    { width: 80px;  text-align: right; }
-.col-eta    { min-width: 150px; color: var(--navy-light); font-weight: 500; }
+.col-index  { width: 32px;  text-align: center; color: var(--navy-light); font-weight: 700; }
+.col-name   { min-width: 110px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+.col-coord  { width: 140px; font-size: 11px; color: var(--text-muted); }
+.col-num    { width: 72px;  text-align: right; }
+.col-eta    { min-width: 130px; color: var(--navy-light); font-weight: 500; }
+.col-speed  { width: 60px;  text-align: right; }
+.col-time   { width: 72px;  text-align: right; }
+.col-xtd    { width: 52px;  text-align: right; }
+.col-rem    { min-width: 100px; }
 
 /* ── Status Bar ─────────────────────────────────────────────────────────── */
 .status-bar {
@@ -433,10 +440,25 @@ html, body {
   margin: 4px 0;
 }
 
+/* ── Voyage metadata (print-only, hidden on screen) ────────────────────── */
+#print-voyage-meta {
+  display: none;
+}
+
 /* ── Scrollbar (content area) ───────────────────────────────────────────── */
 .table-scroll::-webkit-scrollbar        { width: 6px; height: 6px; }
 .table-scroll::-webkit-scrollbar-track  { background: #f0f4f8; }
 .table-scroll::-webkit-scrollbar-thumb  { background: #b0c4d8; border-radius: 3px; }
+
+/* ── Editable Remarks cell ──────────────────────────────────────────────── */
+.col-rem[contenteditable="true"] {
+  outline: none;
+  cursor: text;
+}
+.col-rem[contenteditable="true"]:focus {
+  background: #fffde7;
+  outline: 1px solid var(--gold);
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    PRINT STYLES (A4 landscape)
@@ -444,7 +466,7 @@ html, body {
 @media print {
   @page {
     size: A4 landscape;
-    margin: 15mm 12mm;
+    margin: 12mm 10mm;
   }
 
   /* Hide everything except the print section */
@@ -462,16 +484,36 @@ html, body {
   .content-area,
   .table-panel { all: unset; display: block; }
 
+  /* Voyage metadata block */
+  #print-voyage-meta {
+    display: block !important;
+    font-family: Arial, sans-serif;
+    font-size: 9pt;
+    border: 1pt solid #333;
+    padding: 6pt 8pt;
+    margin-bottom: 6pt;
+  }
+
+  #print-voyage-meta .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4pt 12pt;
+  }
+
+  #print-voyage-meta .meta-field { line-height: 1.6; }
+  #print-voyage-meta .meta-label { font-weight: bold; color: #000; }
+  #print-voyage-meta .meta-value { color: #222; }
+
   /* Print header */
   .table-panel::before {
-    content: 'PASSAGE PLAN \2014 IMO COMPLIANT';
+    content: 'PASSAGE PLAN \2014 IMO COMPLIANT  (IMO Res. A.893(21))';
     display: block;
-    font-size: 16pt;
+    font-size: 14pt;
     font-weight: bold;
     text-align: center;
     border-bottom: 2pt solid #000;
-    padding-bottom: 6pt;
-    margin-bottom: 8pt;
+    padding-bottom: 5pt;
+    margin-bottom: 6pt;
     font-family: Arial, sans-serif;
     letter-spacing: 1px;
   }
@@ -481,31 +523,43 @@ html, body {
     color: #000 !important;
     padding: 0 0 4pt;
     border-bottom: 1pt solid #000;
-    margin-bottom: 6pt;
+    margin-bottom: 4pt;
   }
 
-  .table-title { color: #000 !important; font-size: 10pt; }
-  .plan-summary { color: #000 !important; font-size: 9pt; }
+  .table-title { color: #000 !important; font-size: 9pt; }
+  .plan-summary { color: #000 !important; font-size: 8pt; }
 
   .table-scroll { overflow: visible; }
 
-  .plan-table { font-size: 9pt; font-family: Arial, sans-serif; }
-  .plan-table thead { background: #e0e0e0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .plan-table thead th { color: #000 !important; border: 0.5pt solid #888; }
-  .plan-table td { border: 0.5pt solid #ccc; padding: 3pt 6pt; }
+  .plan-table { font-size: 8pt; font-family: Arial, sans-serif; }
+  .plan-table thead { background: #d0d0d0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .plan-table thead th { color: #000 !important; border: 0.5pt solid #666; padding: 3pt 4pt; }
+  .plan-table td { border: 0.5pt solid #bbb; padding: 2pt 4pt; }
   .plan-table tbody tr:nth-child(even) { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .plan-table tr.row-departure { background: #d4edda !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .plan-table tr.row-arrival   { background: #fde8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Print footer */
+  .table-panel::after {
+    content: 'Prepared by: ________________  Master Signature: ________________  Date: ________________  This plan does not replace navigational watchkeeping obligations.';
+    display: block;
+    font-size: 7pt;
+    font-family: Arial, sans-serif;
+    margin-top: 10pt;
+    border-top: 1pt solid #000;
+    padding-top: 4pt;
+    color: #333;
+  }
 }
 
 /* ── Responsive narrow screens ─────────────────────────────────────────── */
 @media (max-width: 900px) {
   :root { --sidebar-w: 260px; }
-  .map-wrapper { flex: 0 0 45%; }
+  .map-wrapper { height: 45vh; }
 }
 
 @media (max-width: 600px) {
   .main-layout { flex-direction: column; }
   .sidebar { width: 100%; min-width: unset; max-height: 280px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
-  .map-wrapper { flex: 0 0 200px; }
+  .map-wrapper { height: 200px; }
 }

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PassagePlan — IMO-Compliant Passage Plan Generator</title>
+
+  <!-- ── Leaflet.js ────────────────────────────────────────────────────── -->
+  <link  rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+         crossorigin="anonymous" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          crossorigin="anonymous"></script>
+
+  <!-- ── Turf.js ───────────────────────────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"
+          crossorigin="anonymous"></script>
+
+  <!-- ── App Styles ────────────────────────────────────────────────────── -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ════════ TOP BAR ════════════════════════════════════════════════════ -->
+  <header class="top-bar">
+    <div class="brand">
+      <!-- Anchor / ship icon -->
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="22"/>
+        <path d="M5 12H2a10 10 0 0 0 20 0h-3"/><line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      <div>
+        <div>PassagePlan</div>
+        <div class="brand-sub">IMO-Compliant Route Generator &amp; Viewer</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <span id="clock">——</span>
+      <span>|</span>
+      <span>Second Officer Bridge Tool</span>
+    </div>
+  </header>
+
+  <!-- ════════ MAIN LAYOUT ════════════════════════════════════════════════ -->
+  <div class="main-layout">
+
+    <!-- ══ SIDEBAR ════════════════════════════════════════════════════════ -->
+    <aside class="sidebar">
+
+      <!-- ── Route File ──────────────────────────────────────────────── -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Route File
+        </div>
+
+        <div id="drop-zone" role="button" tabindex="0"
+             aria-label="Drop or click to upload a route file">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)"
+               stroke-width="1.5" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/>
+            <polyline points="9 15 12 12 15 15"/>
+          </svg>
+          Drop file here or click to browse
+          <div class="drop-hint">Supports .rtz &nbsp;·&nbsp; .gpx &nbsp;·&nbsp; .csv</div>
+        </div>
+
+        <input type="file" id="route-file" accept=".rtz,.gpx,.csv" style="display:none;" />
+
+        <div class="btn-group" style="margin-bottom:6px;">
+          <button class="btn btn-primary btn-sm" id="upload-btn" style="flex:1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round">
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            </svg>
+            Browse…
+          </button>
+          <button class="btn btn-danger btn-sm" id="clear-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+            Clear
+          </button>
+        </div>
+        <div id="file-name" aria-live="polite">No file selected</div>
+      </div>
+
+      <!-- ── Voyage Parameters ───────────────────────────────────────── -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Voyage Parameters
+        </div>
+
+        <div class="form-group">
+          <label for="departure-time">Departure Date / Time (UTC)</label>
+          <input type="datetime-local" id="departure-time" />
+        </div>
+
+        <div class="form-group">
+          <label for="ship-speed">Ship Speed (Knots)</label>
+          <input type="number" id="ship-speed" value="12" min="0.1" max="50" step="0.1"
+                 placeholder="e.g. 12" />
+        </div>
+
+        <button class="btn btn-success btn-block" id="calc-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            <path d="M8 10l2 2 4-4"/>
+          </svg>
+          Calculate ETA &amp; Course
+        </button>
+      </div>
+
+      <!-- ── UN/LOCODE Lookup ────────────────────────────────────────── -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Port / UN/LOCODE Lookup
+        </div>
+
+        <div class="form-group">
+          <label for="locode-input">Enter UN/LOCODE (e.g. SGSIN, IDJKT)</label>
+          <input type="text" id="locode-input" placeholder="e.g. SGSIN"
+                 maxlength="10" style="text-transform:uppercase;" />
+        </div>
+        <button class="btn btn-primary btn-block btn-sm" id="locode-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          Navigate to Port
+        </button>
+      </div>
+
+      <!-- ── Weather Overlay ─────────────────────────────────────────── -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/>
+          </svg>
+          Weather Overlay
+        </div>
+
+        <div class="toggle-row">
+          <span class="toggle-label">Windy Wind/Wave Overlay</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="windy-toggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);line-height:1.4;">
+          Toggle to overlay Windy weather map.<br>
+          Disables base-map interaction while active.
+        </div>
+      </div>
+
+      <!-- ── Export ──────────────────────────────────────────────────── -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Export
+        </div>
+        <button class="btn btn-warning btn-block" id="print-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Print / Export to PDF
+        </button>
+        <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:5px;line-height:1.4;">
+          Prints the waypoint table in A4 landscape format, suitable for bridge documentation.
+        </div>
+      </div>
+
+      <!-- ── Sample Data ─────────────────────────────────────────────── -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Demo / Sample Data
+        </div>
+        <button class="btn btn-secondary btn-block btn-sm" id="demo-btn">
+          Load Sample Route (SE Asia)
+        </button>
+      </div>
+
+    </aside>
+    <!-- ═══ END SIDEBAR ════════════════════════════════════════════════════ -->
+
+    <!-- ══ CONTENT AREA ══════════════════════════════════════════════════ -->
+    <div class="content-area">
+
+      <!-- ── Interactive Map ────────────────────────────────────────── -->
+      <div class="map-wrapper">
+        <div id="map" aria-label="Interactive route map"></div>
+        <!-- Windy weather overlay -->
+        <div id="windy-overlay" aria-label="Windy weather overlay"></div>
+      </div>
+
+      <!-- ── Passage Plan Table ─────────────────────────────────────── -->
+      <div class="table-panel">
+        <div class="table-header">
+          <div class="table-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a227"
+                 stroke-width="2.5" stroke-linecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Passage Plan — Waypoint ETA Table
+          </div>
+          <span class="plan-summary" id="plan-summary"></span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="plan-table" id="plan-table">
+            <thead>
+              <tr>
+                <th class="col-index">#</th>
+                <th class="col-name">Waypoint Name</th>
+                <th class="col-coord">Latitude</th>
+                <th class="col-coord">Longitude</th>
+                <th class="col-num">Dist (NM)</th>
+                <th class="col-num">Course (°T)</th>
+                <th class="col-num">Cum. NM</th>
+                <th class="col-eta">ETA (UTC)</th>
+              </tr>
+            </thead>
+            <tbody id="plan-tbody">
+              <tr>
+                <td colspan="8" style="text-align:center;padding:24px;color:#888;font-family:sans-serif;">
+                  Upload a route file (.rtz, .gpx, .csv) or load the demo route to begin.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- ── END Table Panel ─────────────────────────────────────────── -->
+
+      <!-- ── Status Bar ─────────────────────────────────────────────── -->
+      <div class="status-bar status-info" id="status-bar" aria-live="polite" role="status">
+        Initialising…
+      </div>
+
+    </div>
+    <!-- ═══ END CONTENT AREA ══════════════════════════════════════════════ -->
+
+  </div><!-- /.main-layout -->
+</div><!-- /.app-shell -->
+
+<!-- ── App Scripts ──────────────────────────────────────────────────────── -->
+<script src="js/parser.js"></script>
+<script src="js/map.js"></script>
+<script src="js/app.js"></script>
+
+<!-- ── Clock & Demo ─────────────────────────────────────────────────────── -->
+<script>
+  /* Live UTC clock */
+  function updateClock() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('clock').textContent =
+      `${now.getUTCFullYear()}-${pad(now.getUTCMonth()+1)}-${pad(now.getUTCDate())} ` +
+      `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())} UTC`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* Demo sample route: Singapore → Batam → Jakarta → Surabaya */
+  document.addEventListener('DOMContentLoaded', () => {
+    const demoBtn = document.getElementById('demo-btn');
+    if (demoBtn) {
+      demoBtn.addEventListener('click', () => {
+        const sampleWaypoints = [
+          { name: 'Singapore (SGSIN)',  lat:  1.2897, lon: 103.8501 },
+          { name: 'Batam (IDBTM)',      lat:  1.1360, lon: 104.0305 },
+          { name: 'Selat Bangka',       lat: -2.2000, lon: 105.8000 },
+          { name: 'Jakarta (IDJKT)',    lat: -6.1175, lon: 106.8380 },
+          { name: 'Selat Bali',         lat: -7.7500, lon: 114.4000 },
+          { name: 'Surabaya (IDSBY)',   lat: -7.2575, lon: 112.7520 },
+        ];
+
+        /* Inject waypoints directly into app state via a synthetic file parse */
+        const escCsv = s => s.includes(',') ? `"${s.replace(/"/g, '""')}"` : s;
+        const csvLines = ['name,lat,lon', ...sampleWaypoints.map(w => `${escCsv(w.name)},${w.lat},${w.lon}`)].join('\n');
+        const blob = new Blob([csvLines], { type: 'text/csv' });
+        const file = new File([blob], 'demo_route.csv', { type: 'text/csv' });
+
+        document.getElementById('file-name').textContent = 'demo_route.csv (sample)';
+
+        RouteParser.parseFile(file).then(wps => {
+          /* Directly trigger app's internal handler via a custom event */
+          window._appLoadWaypoints(wps, 'demo_route.csv');
+        });
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

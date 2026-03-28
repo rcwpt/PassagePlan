@@ -1,0 +1,511 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PassagePlan – IMO-Compliant Passage Plan Generator
+   style.css  |  Maritime theme: navy blue / white / gold accents
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── CSS Custom Properties ─────────────────────────────────────────────── */
+:root {
+  --navy:         #0d2137;
+  --navy-mid:     #143352;
+  --navy-light:   #1a4a73;
+  --sea-blue:     #1e6fa8;
+  --sea-light:    #2980b9;
+  --teal:         #0e7a8a;
+  --gold:         #c9a227;
+  --gold-light:   #e2b73a;
+  --white:        #ffffff;
+  --off-white:    #f0f4f8;
+  --panel-bg:     #e8eef5;
+  --text-primary: #0d2137;
+  --text-muted:   #5a7290;
+  --border:       #b0c4d8;
+  --row-even:     #e8f1f8;
+  --row-odd:      #ffffff;
+  --departure:    #d4edda;
+  --arrival:      #fde8e8;
+  --radius:       6px;
+  --shadow:       0 2px 8px rgba(13,33,55,0.18);
+  --sidebar-w:    320px;
+}
+
+/* ── Reset & Base ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--navy);
+  overflow: hidden;
+}
+
+/* ── App Shell ─────────────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ── Top Bar ───────────────────────────────────────────────────────────── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--navy);
+  color: var(--white);
+  padding: 0 16px;
+  height: 52px;
+  flex-shrink: 0;
+  border-bottom: 2px solid var(--gold);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  z-index: 200;
+}
+
+.top-bar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.top-bar .brand svg { flex-shrink: 0; }
+
+.top-bar .brand-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--gold-light);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.top-bar .top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* ── Main Layout ───────────────────────────────────────────────────────── */
+.main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--navy-mid);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+/* ── Sidebar Sections ──────────────────────────────────────────────────── */
+.sidebar-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--gold);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebar-section-title svg { opacity: 0.85; }
+
+/* ── Form Controls ─────────────────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 10px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="datetime-local"] {
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius);
+  color: var(--white);
+  padding: 7px 10px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.form-group input:focus {
+  border-color: var(--sea-light);
+  background: rgba(255,255,255,0.13);
+}
+
+.form-group input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.6);
+  cursor: pointer;
+}
+
+/* ── Drop Zone ─────────────────────────────────────────────────────────── */
+#drop-zone {
+  border: 2px dashed rgba(255,255,255,0.2);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+#drop-zone:hover,
+#drop-zone.drag-over {
+  border-color: var(--sea-light);
+  background: rgba(41,128,185,0.15);
+  color: var(--white);
+}
+
+#drop-zone svg { margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto; }
+#drop-zone .drop-hint { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+#file-name {
+  font-size: 11px;
+  color: var(--gold-light);
+  word-break: break-all;
+  min-height: 16px;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn:hover  { filter: brightness(1.12); }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary   { background: var(--sea-blue);  color: var(--white); }
+.btn-success   { background: #27ae60;           color: var(--white); }
+.btn-warning   { background: var(--gold);       color: var(--navy);  }
+.btn-danger    { background: #c0392b;           color: var(--white); }
+.btn-secondary { background: rgba(255,255,255,0.12); color: var(--white); border: 1px solid rgba(255,255,255,0.2); }
+.btn-sm        { padding: 5px 9px; font-size: 11px; }
+.btn-block     { width: 100%; }
+
+.btn-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── Toggle Switch ─────────────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.toggle-label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 38px;
+  height: 20px;
+}
+
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.25s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.25s;
+}
+
+.toggle-switch input:checked + .toggle-slider { background: var(--sea-light); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+/* ── Content Area ──────────────────────────────────────────────────────── */
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--off-white);
+}
+
+/* ── Map Container ─────────────────────────────────────────────────────── */
+.map-wrapper {
+  position: relative;
+  flex: 0 0 55%;
+  min-height: 280px;
+  background: #1a3a5c;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Windy overlay sits on top of the Leaflet map */
+#windy-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+}
+
+#windy-overlay iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Table Panel ───────────────────────────────────────────────────────── */
+.table-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--white);
+  border-top: 2px solid var(--navy);
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: var(--navy);
+  color: var(--white);
+  flex-shrink: 0;
+}
+
+.table-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.plan-summary {
+  font-size: 11px;
+  color: var(--gold-light);
+  font-style: italic;
+}
+
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* ── Passage Plan Table ─────────────────────────────────────────────────── */
+.plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.plan-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--navy-light);
+  color: var(--white);
+}
+
+.plan-table thead th {
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.plan-table thead th:last-child { border-right: none; }
+
+.plan-table tbody tr:nth-child(even) { background: var(--row-even); }
+.plan-table tbody tr:nth-child(odd)  { background: var(--row-odd); }
+.plan-table tbody tr:hover           { background: #cfe2f3; }
+
+.plan-table tbody tr.row-departure   { background: var(--departure) !important; font-weight: 600; }
+.plan-table tbody tr.row-arrival     { background: var(--arrival) !important; font-weight: 600; }
+
+.plan-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.col-index  { width: 36px;  text-align: center; color: var(--navy-light); font-weight: 700; }
+.col-name   { min-width: 120px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.col-coord  { width: 160px; font-size: 11px; color: var(--text-muted); }
+.col-num    { width: 80px;  text-align: right; }
+.col-eta    { min-width: 150px; color: var(--navy-light); font-weight: 500; }
+
+/* ── Status Bar ─────────────────────────────────────────────────────────── */
+.status-bar {
+  padding: 5px 14px;
+  font-size: 11px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  font-style: italic;
+}
+
+.status-info  { background: var(--navy-mid); color: rgba(255,255,255,0.75); }
+.status-ok    { background: #1a4a2e; color: #6fcf97; }
+.status-warn  { background: #4a3b00; color: #f2c94c; }
+.status-error { background: #4a1a1a; color: #eb5757; }
+
+/* ── Leaflet popup customisation ──────────────────────────────────────── */
+.map-popup { font-family: 'Segoe UI', sans-serif; font-size: 12px; line-height: 1.7; min-width: 180px; }
+.map-popup strong { color: var(--navy); font-size: 13px; }
+.popup-label { color: var(--text-muted); font-size: 11px; }
+
+.leaflet-popup-content-wrapper {
+  border-radius: 6px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25) !important;
+}
+
+/* ── Divider ────────────────────────────────────────────────────────────── */
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 4px 0;
+}
+
+/* ── Scrollbar (content area) ───────────────────────────────────────────── */
+.table-scroll::-webkit-scrollbar        { width: 6px; height: 6px; }
+.table-scroll::-webkit-scrollbar-track  { background: #f0f4f8; }
+.table-scroll::-webkit-scrollbar-thumb  { background: #b0c4d8; border-radius: 3px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRINT STYLES (A4 landscape)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 15mm 12mm;
+  }
+
+  /* Hide everything except the print section */
+  body { background: white; overflow: visible; }
+  .top-bar,
+  .sidebar,
+  .map-wrapper,
+  .table-header .btn-group,
+  .status-bar,
+  #windy-overlay,
+  .table-header .btn { display: none !important; }
+
+  .app-shell,
+  .main-layout,
+  .content-area,
+  .table-panel { all: unset; display: block; }
+
+  /* Print header */
+  .table-panel::before {
+    content: 'PASSAGE PLAN \2014 IMO COMPLIANT';
+    display: block;
+    font-size: 16pt;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2pt solid #000;
+    padding-bottom: 6pt;
+    margin-bottom: 8pt;
+    font-family: Arial, sans-serif;
+    letter-spacing: 1px;
+  }
+
+  .table-header {
+    background: none !important;
+    color: #000 !important;
+    padding: 0 0 4pt;
+    border-bottom: 1pt solid #000;
+    margin-bottom: 6pt;
+  }
+
+  .table-title { color: #000 !important; font-size: 10pt; }
+  .plan-summary { color: #000 !important; font-size: 9pt; }
+
+  .table-scroll { overflow: visible; }
+
+  .plan-table { font-size: 9pt; font-family: Arial, sans-serif; }
+  .plan-table thead { background: #e0e0e0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .plan-table thead th { color: #000 !important; border: 0.5pt solid #888; }
+  .plan-table td { border: 0.5pt solid #ccc; padding: 3pt 6pt; }
+  .plan-table tbody tr:nth-child(even) { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .plan-table tr.row-departure { background: #d4edda !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .plan-table tr.row-arrival   { background: #fde8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ── Responsive narrow screens ─────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 260px; }
+  .map-wrapper { flex: 0 0 45%; }
+}
+
+@media (max-width: 600px) {
+  .main-layout { flex-direction: column; }
+  .sidebar { width: 100%; min-width: unset; max-height: 280px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .map-wrapper { flex: 0 0 200px; }
+}
